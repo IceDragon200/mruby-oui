@@ -1,6 +1,8 @@
 #ifndef MRUBY_OUI_RECT_H
 #define MRUBY_OUI_RECT_H
 
+#include <stdbool.h>
+
 #include <mruby.h>
 #include <mruby/class.h>
 

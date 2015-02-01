@@ -1,6 +1,8 @@
 #ifndef MRUBY_OUI_VEC2_H
 #define MRUBY_OUI_VEC2_H
 
+#include <stdbool.h>
+
 #include <mruby.h>
 #include <mruby/class.h>
 

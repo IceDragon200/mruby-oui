@@ -1,3 +1,6 @@
+#include <memory.h>
+#include <stdbool.h>
+
 #include <mruby.h>
 #include <mruby/array.h>
 #include <mruby/class.h>
@@ -12,14 +15,23 @@
 
 #include "oui_helper_macros.h"
 
-static mrb_state *contextMRB;
+typedef struct UIcontextData {
+  mrb_state *mrb;
+  mrb_value self;
+} UIcontextData;
+
 static struct RClass *context_class;
 
 static void
 context_free(mrb_state *mrb, void *ptr)
 {
+  UIcontextData *data;
   UIcontext *context = ptr;
   if (context) {
+    data = (UIcontextData*)uiGetContextHandle(context);
+    if (data) {
+      mrb_free(mrb, data);
+    }
     uiDestroyContext(context);
   }
 }
@@ -38,132 +50,114 @@ get_context(mrb_state *mrb, mrb_value self)
   return (UIcontext*)mrb_data_get_ptr(mrb, self, &mrb_oui_context_type);
 }
 
-static inline mrb_value
-get_current_mrb_context(mrb_state *mrb)
-{
-  return mrb_iv_get(mrb, mrb_obj_value(context_class),
-                         mrb_intern_lit(mrb, "__current"));
-}
-
-static mrb_value
-context_s_get_current(mrb_state *mrb, mrb_value klass)
-{
-  return get_current_mrb_context(mrb);
-}
-
-static mrb_value
-context_s_clear_current(mrb_state *mrb, mrb_value klass)
-{
-  mrb_iv_set(mrb, mrb_obj_value(context_class),
-                  mrb_intern_lit(mrb, "__current"),
-                  mrb_nil_value());
-  return klass;
-}
-
 static mrb_value
 context_initialize(mrb_state *mrb, mrb_value self)
 {
   UIcontext *context;
+  UIcontextData *data;
   mrb_int item_capacity;
   mrb_int buffer_capacity;
   mrb_get_args(mrb, "ii", &item_capacity, &buffer_capacity);
   context = uiCreateContext(item_capacity, buffer_capacity);
+  data = mrb_malloc(mrb, sizeof(UIcontextData));
+  memset(data, 0, sizeof(UIcontextData));
+  data->mrb = mrb;
+  data->self = self;
+  uiSetContextHandle(context, (void*)data);
   DATA_PTR(self) = context;
   DATA_TYPE(self) = &mrb_oui_context_type;
   return self;
 }
 
-static mrb_value
-context_make_current(mrb_state *mrb, mrb_value self)
-{
-  UIcontext *context = get_context(mrb, self);
-  uiMakeCurrent(context);
-  mrb_iv_set(mrb, mrb_obj_value(context_class),
-                  mrb_intern_lit(mrb, "__current"),
-                  self);
-  return self;
-}
-
-ng_DEF_FUNC_N2(context_set_cursor, uiSetCursor, "ii", mrb_int, mrb_int);
-ng_DEF_FUNC_N0_vec2(context_get_cursor, uiGetCursor);
-ng_DEF_FUNC_N0_vec2(context_get_cursor_delta, uiGetCursorDelta);
-ng_DEF_FUNC_N0_vec2(context_get_cursor_start, uiGetCursorStart);
-ng_DEF_FUNC_N0_vec2(context_get_cursor_start_delta, uiGetCursorStartDelta);
-ng_DEF_FUNC_N3(context_set_button, uiSetButton, "iib", mrb_int, mrb_int, mrb_bool);
-ng_DEF_FUNC_N1_i(context_get_button, uiGetButton, "i", mrb_int);
-ng_DEF_FUNC_N0_i(context_get_clicks, uiGetClicks);
-ng_DEF_FUNC_N3(context_set_key, uiSetKey, "iib", mrb_int, mrb_int, mrb_bool);
-ng_DEF_FUNC_N1(context_set_char, uiSetChar, "i", mrb_int);
-ng_DEF_FUNC_N2(context_set_scroll, uiSetScroll, "ii", mrb_int, mrb_int);
-ng_DEF_FUNC_N0_vec2(context_get_scroll, uiGetScroll);
-ng_DEF_FUNC_N0(context_begin_layout, uiBeginLayout);
-ng_DEF_FUNC_N0(context_end_layout, uiEndLayout);
-ng_DEF_FUNC_N0(context_update_hot_item, uiUpdateHotItem);
-ng_DEF_FUNC_N1(context_process, uiProcess, "i", mrb_int);
-ng_DEF_FUNC_N0(context_clear_state, uiClearState);
-ng_DEF_FUNC_N0_i(context_item, uiItem);
-ng_DEF_FUNC_N2(context_set_frozen, uiSetFrozen, "ib", mrb_int, mrb_bool);
+d_DEF_FUNC_N2(UIcontext*, get_context, context_set_cursor, uiSetCursor, "ii", mrb_int, mrb_int);
+d_DEF_FUNC_N0_vec2(UIcontext*, get_context, context_get_cursor, uiGetCursor);
+d_DEF_FUNC_N0_vec2(UIcontext*, get_context, context_get_cursor_delta, uiGetCursorDelta);
+d_DEF_FUNC_N0_vec2(UIcontext*, get_context, context_get_cursor_start, uiGetCursorStart);
+d_DEF_FUNC_N0_vec2(UIcontext*, get_context, context_get_cursor_start_delta, uiGetCursorStartDelta);
+d_DEF_FUNC_N3(UIcontext*, get_context, context_set_button, uiSetButton, "iib", mrb_int, mrb_int, mrb_bool);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_get_button, uiGetButton, "i", mrb_int);
+d_DEF_FUNC_N0_i(UIcontext*, get_context, context_get_clicks, uiGetClicks);
+d_DEF_FUNC_N3(UIcontext*, get_context, context_set_key, uiSetKey, "iib", mrb_int, mrb_int, mrb_bool);
+d_DEF_FUNC_N1(UIcontext*, get_context, context_set_char, uiSetChar, "i", mrb_int);
+d_DEF_FUNC_N2(UIcontext*, get_context, context_set_scroll, uiSetScroll, "ii", mrb_int, mrb_int);
+d_DEF_FUNC_N0_vec2(UIcontext*, get_context, context_get_scroll, uiGetScroll);
+d_DEF_FUNC_N0(UIcontext*, get_context, context_begin_layout, uiBeginLayout);
+d_DEF_FUNC_N0(UIcontext*, get_context, context_end_layout, uiEndLayout);
+d_DEF_FUNC_N0(UIcontext*, get_context, context_update_hot_item, uiUpdateHotItem);
+d_DEF_FUNC_N1(UIcontext*, get_context, context_process, uiProcess, "i", mrb_int);
+d_DEF_FUNC_N0(UIcontext*, get_context, context_clear_state, uiClearState);
+d_DEF_FUNC_N0_i(UIcontext*, get_context, context_item, uiItem);
+d_DEF_FUNC_N2(UIcontext*, get_context, context_set_frozen, uiSetFrozen, "ib", mrb_int, mrb_bool);
 
 //static mrb_value
 //context_set_handle(mrb_state *mrb, mrb_value self)
 //{
+//  UIcontext *ctx;
 //  mrb_int item;
 //  mrb_value handle;
 //  mrb_get_args(mrb, "io", &item, &handle);
-//  uiSetHandle(item, mrb_cptr(handle));
+//  ctx = get_context(mrb, self);
+//  uiSetHandle(ctx, item, mrb_cptr(handle));
 //  return self;
 //}
 
-//ng_DEF_FUNC_N2_cptr(context_alloc_handle, uiAllocHandle, "ii", mrb_int, mrb_int);
+//DEF_FUNC_N2_cptr(context_alloc_handle, uiAllocHandle, "ii", mrb_int, mrb_int);
 
 static void
-context_handle_func(int item, UIevent event)
+context_handle_func(UIcontext *ctx, int item, UIevent event)
 {
+  UIcontextData *data;
+  mrb_state *mrb;
+  mrb_value self;
   mrb_value vals[3];
-  const int ai = mrb_gc_arena_save(contextMRB);
-  mrb_value mcontext = get_current_mrb_context(contextMRB);
-  mrb_value blk = mrb_iv_get(contextMRB, mcontext, mrb_intern_lit(contextMRB, "__handler"));
-  vals[0] = mcontext;
+  data = (UIcontextData*)uiGetContextHandle(ctx);
+  mrb = data->mrb;
+  self = data->self;
+  const int ai = mrb_gc_arena_save(mrb);
+  mrb_value blk = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "__handler"));
+  vals[0] = self;
   vals[1] = mrb_fixnum_value(item);
-  vals[2] = mrb_oui_event_value(contextMRB, event);
-  mrb_yield_argv(contextMRB, blk, 3, vals);
-  mrb_gc_arena_restore(contextMRB, ai);
+  vals[2] = mrb_oui_event_value(mrb, event);
+  mrb_yield_argv(mrb, blk, 3, vals);
+  mrb_gc_arena_restore(mrb, ai);
 }
 
 static mrb_value
 context_set_handler(mrb_state *mrb, mrb_value self)
 {
+  UIcontext *ctx;
   mrb_value blk;
   mrb_get_args(mrb, "|&", &blk);
+  ctx = get_context(mrb, self);
   mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "__handler"), blk);
   if (mrb_nil_p(blk)) {
-    uiSetHandler(NULL);
+    uiSetHandler(ctx, NULL);
   } else {
-    uiSetHandler(context_handle_func);
+    uiSetHandler(ctx, context_handle_func);
   }
   return blk;
 }
 
-ng_DEF_FUNC_N2(context_set_events, uiSetEvents, "ii", mrb_int, mrb_int);
-ng_DEF_FUNC_N2(context_set_flags, uiSetFlags, "ii", mrb_int, mrb_int);
-ng_DEF_FUNC_N2_i(context_insert, uiInsert, "ii", mrb_int, mrb_int);
-ng_DEF_FUNC_N2_i(context_append, uiAppend, "ii", mrb_int, mrb_int);
-ng_DEF_FUNC_N2_i(context_insert_back, uiInsertBack, "ii", mrb_int, mrb_int);
-ng_DEF_FUNC_N2_i(context_insert_front, uiInsertFront, "ii", mrb_int, mrb_int);
-ng_DEF_FUNC_N3(context_set_size, uiSetSize, "iii", mrb_int, mrb_int, mrb_int);
-ng_DEF_FUNC_N2(context_set_layout, uiSetLayout, "ii", mrb_int, mrb_int);
-ng_DEF_FUNC_N2(context_set_box, uiSetBox, "ii", mrb_int, mrb_int);
-ng_DEF_FUNC_N5(context_set_margins, uiSetMargins, "iiiii", mrb_int, mrb_int, mrb_int, mrb_int, mrb_int);
-ng_DEF_FUNC_N1(context_focus, uiFocus, "i", mrb_int);
-ng_DEF_FUNC_N1_i(context_first_child, uiFirstChild, "i", mrb_int);
-ng_DEF_FUNC_N1_i(context_next_sibling, uiNextSibling, "i", mrb_int);
-ng_DEF_FUNC_N0_i(context_get_item_count, uiGetItemCount);
-ng_DEF_FUNC_N0_i(context_get_alloc_size, uiGetAllocSize);
-ng_DEF_FUNC_N1_i(context_get_state, uiGetState, "i", mrb_int);
-//ng_DEF_FUNC_N1_cptr(context_get_handle, uiGetHandle, "i", mrb_int);
-ng_DEF_FUNC_N0_i(context_get_hot_item, uiGetHotItem);
-ng_DEF_FUNC_N0_i(context_get_focused_item, uiGetFocusedItem);
-ng_DEF_FUNC_N5_i(context_find_item, uiFindItem, "iiiii", mrb_int, mrb_int, mrb_int, mrb_int, mrb_int);
+d_DEF_FUNC_N2(UIcontext*, get_context, context_set_events, uiSetEvents, "ii", mrb_int, mrb_int);
+d_DEF_FUNC_N2(UIcontext*, get_context, context_set_flags, uiSetFlags, "ii", mrb_int, mrb_int);
+d_DEF_FUNC_N2_i(UIcontext*, get_context, context_insert, uiInsert, "ii", mrb_int, mrb_int);
+d_DEF_FUNC_N2_i(UIcontext*, get_context, context_append, uiAppend, "ii", mrb_int, mrb_int);
+d_DEF_FUNC_N2_i(UIcontext*, get_context, context_insert_back, uiInsertBack, "ii", mrb_int, mrb_int);
+d_DEF_FUNC_N2_i(UIcontext*, get_context, context_insert_front, uiInsertFront, "ii", mrb_int, mrb_int);
+d_DEF_FUNC_N3(UIcontext*, get_context, context_set_size, uiSetSize, "iii", mrb_int, mrb_int, mrb_int);
+d_DEF_FUNC_N2(UIcontext*, get_context, context_set_layout, uiSetLayout, "ii", mrb_int, mrb_int);
+d_DEF_FUNC_N2(UIcontext*, get_context, context_set_box, uiSetBox, "ii", mrb_int, mrb_int);
+d_DEF_FUNC_N5(UIcontext*, get_context, context_set_margins, uiSetMargins, "iiiii", mrb_int, mrb_int, mrb_int, mrb_int, mrb_int);
+d_DEF_FUNC_N1(UIcontext*, get_context, context_focus, uiFocus, "i", mrb_int);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_first_child, uiFirstChild, "i", mrb_int);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_next_sibling, uiNextSibling, "i", mrb_int);
+d_DEF_FUNC_N0_i(UIcontext*, get_context, context_get_item_count, uiGetItemCount);
+d_DEF_FUNC_N0_i(UIcontext*, get_context, context_get_alloc_size, uiGetAllocSize);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_get_state, uiGetState, "i", mrb_int);
+//d_DEF_FUNC_N1_cptr(UIcontext*, get_context, context_get_handle, uiGetHandle, "i", mrb_int);
+d_DEF_FUNC_N0_i(UIcontext*, get_context, context_get_hot_item, uiGetHotItem);
+d_DEF_FUNC_N0_i(UIcontext*, get_context, context_get_focused_item, uiGetFocusedItem);
+d_DEF_FUNC_N5_i(UIcontext*, get_context, context_find_item, uiFindItem, "iiiii", mrb_int, mrb_int, mrb_int, mrb_int, mrb_int);
 
 static mrb_value
 context_get_handler(mrb_state *mrb, mrb_value self)
@@ -171,33 +165,31 @@ context_get_handler(mrb_state *mrb, mrb_value self)
   return mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "__handler"));
 }
 
-ng_DEF_FUNC_N1_i(context_get_events, uiGetEvents, "i", mrb_int);
-ng_DEF_FUNC_N1_i(context_get_flags, uiGetFlags, "i", mrb_int);
-ng_DEF_FUNC_N0_i(context_get_key, uiGetKey);
-ng_DEF_FUNC_N0_i(context_get_modifier, uiGetModifier);
-ng_DEF_FUNC_N1_rect(context_get_rect, uiGetRect, "i", mrb_int);
-ng_DEF_FUNC_N3_i(context_contains, uiContains, "iii", mrb_int, mrb_int, mrb_int);
-ng_DEF_FUNC_N1_i(context_get_width, uiGetWidth, "i", mrb_int);
-ng_DEF_FUNC_N1_i(context_get_height, uiGetHeight, "i", mrb_int);
-ng_DEF_FUNC_N1_i(context_get_layout, uiGetLayout, "i", mrb_int);
-ng_DEF_FUNC_N1_i(context_get_box, uiGetBox, "i", mrb_int);
-ng_DEF_FUNC_N1_i(context_get_margin_left, uiGetMarginLeft, "i", mrb_int);
-ng_DEF_FUNC_N1_i(context_get_margin_top, uiGetMarginTop, "i", mrb_int);
-ng_DEF_FUNC_N1_i(context_get_margin_right, uiGetMarginRight, "i", mrb_int);
-ng_DEF_FUNC_N1_i(context_get_margin_down, uiGetMarginDown, "i", mrb_int);
-ng_DEF_FUNC_N1_i(context_recover_item, uiRecoverItem, "i", mrb_int);
-ng_DEF_FUNC_N2(context_remap_item, uiRemapItem, "ii", mrb_int, mrb_int);
-ng_DEF_FUNC_N0_i(context_get_last_item_count, uiGetLastItemCount);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_get_events, uiGetEvents, "i", mrb_int);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_get_flags, uiGetFlags, "i", mrb_int);
+d_DEF_FUNC_N0_i(UIcontext*, get_context, context_get_key, uiGetKey);
+d_DEF_FUNC_N0_i(UIcontext*, get_context, context_get_modifier, uiGetModifier);
+d_DEF_FUNC_N1_rect(UIcontext*, get_context, context_get_rect, uiGetRect, "i", mrb_int);
+d_DEF_FUNC_N3_i(UIcontext*, get_context, context_contains, uiContains, "iii", mrb_int, mrb_int, mrb_int);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_get_width, uiGetWidth, "i", mrb_int);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_get_height, uiGetHeight, "i", mrb_int);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_get_layout, uiGetLayout, "i", mrb_int);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_get_box, uiGetBox, "i", mrb_int);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_get_margin_left, uiGetMarginLeft, "i", mrb_int);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_get_margin_top, uiGetMarginTop, "i", mrb_int);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_get_margin_right, uiGetMarginRight, "i", mrb_int);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_get_margin_down, uiGetMarginDown, "i", mrb_int);
+d_DEF_FUNC_N1_i(UIcontext*, get_context, context_recover_item, uiRecoverItem, "i", mrb_int);
+d_DEF_FUNC_N2(UIcontext*, get_context, context_remap_item, uiRemapItem, "ii", mrb_int, mrb_int);
+d_DEF_FUNC_N0_i(UIcontext*, get_context, context_get_last_item_count, uiGetLastItemCount);
 
 void
 mrb_oui_context_init(mrb_state *mrb, struct RClass *mod)
 {
-  contextMRB = mrb;
   context_class = mrb_define_class_under(mrb, mod, "Context", mrb->object_class);
   MRB_SET_INSTANCE_TT(context_class, MRB_TT_DATA);
 
   mrb_define_method(mrb, context_class, "initialize",             context_initialize,             MRB_ARGS_REQ(2));
-  mrb_define_method(mrb, context_class, "make_current",           context_make_current,           MRB_ARGS_NONE());
   mrb_define_method(mrb, context_class, "set_cursor",             context_set_cursor,             MRB_ARGS_REQ(2));
   mrb_define_method(mrb, context_class, "cursor",                 context_get_cursor,             MRB_ARGS_NONE());
   mrb_define_method(mrb, context_class, "cursor_delta",           context_get_cursor_delta,       MRB_ARGS_NONE());
@@ -258,13 +250,10 @@ mrb_oui_context_init(mrb_state *mrb, struct RClass *mod)
   mrb_define_method(mrb, context_class, "recover_item",           context_recover_item,           MRB_ARGS_REQ(1));
   mrb_define_method(mrb, context_class, "remap_item",             context_remap_item,             MRB_ARGS_REQ(2));
   mrb_define_method(mrb, context_class, "get_last_item_count",    context_get_last_item_count,    MRB_ARGS_NONE());
-
-  mrb_define_class_method(mrb, context_class, "current", context_s_get_current, MRB_ARGS_NONE());
-  mrb_define_class_method(mrb, context_class, "clear_current", context_s_clear_current, MRB_ARGS_NONE());
 }
 
 void
 mrb_oui_context_final(mrb_state *mrb, struct RClass *mod)
 {
-  contextMRB = NULL;
+  //
 }
