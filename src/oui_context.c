@@ -13,7 +13,7 @@
 #include "oui_rect.h"
 #include "oui_vec2.h"
 
-#include "oui_helper_macros.h"
+#include "mrb_helper_macros.h"
 
 typedef struct UIcontextData {
   mrb_state *mrb;

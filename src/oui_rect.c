@@ -3,7 +3,7 @@
 #include <mruby/data.h>
 
 #include "oui_rect.h"
-#include "oui_helper_macros.h"
+#include "mrb_helper_macros.h"
 
 static struct RClass *rect_class;
 

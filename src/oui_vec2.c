@@ -3,7 +3,7 @@
 #include <mruby/data.h>
 
 #include "oui_vec2.h"
-#include "oui_helper_macros.h"
+#include "mrb_helper_macros.h"
 
 static struct RClass *vec2_class;
 
