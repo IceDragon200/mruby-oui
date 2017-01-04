@@ -7,8 +7,6 @@ MRuby::Gem::Specification.new('mruby-oui') do |spec|
   spec.homepage = 'https://github.com/IceDragon200/mruby-oui'
   # compiler config
   spec.cc.include_paths << ["#{build.root}/src"]
-  # Treat all warnings as errors, forces you to write compliant code
-  spec.cc.flags << '-Werror'
   # I think we inherited the parent flags, might as well flatten the array to
   # be sure we're working with Array<String> and not Array<String, Array<String>>
   spec.cc.flags = spec.cc.flags.flatten
