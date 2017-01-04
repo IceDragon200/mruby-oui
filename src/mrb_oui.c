@@ -7,13 +7,14 @@
 
 #include <oui.h>
 
+#include "mrb_oui_common.h"
 #include "oui_vec2.h"
 #include "oui_rect.h"
 #include "oui_context.h"
 
 static struct RClass *oui_module;
 
-void
+MRB_OUI_EXTERN void
 mrb_mruby_oui_gem_init(mrb_state* mrb)
 {
   oui_module = mrb_define_module(mrb, "OUI");

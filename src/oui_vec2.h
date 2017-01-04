@@ -7,8 +7,9 @@
 #include <mruby/class.h>
 
 #include <oui.h>
+#include "mrb_oui_common.h"
 
-extern const struct mrb_data_type mrb_oui_vec2_type;
+MRB_OUI_EXTERN const struct mrb_data_type mrb_oui_vec2_type;
 void mrb_oui_vec2_init(mrb_state *mrb, struct RClass *mod);
 mrb_value mrb_oui_vec2_value(mrb_state *mrb, UIvec2 vec2);
 

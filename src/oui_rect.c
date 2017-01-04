@@ -4,6 +4,7 @@
 
 #include "oui_rect.h"
 #include "mrb_helper_macros.h"
+#include "mrb_oui_common.h"
 
 static struct RClass *rect_class;
 
@@ -15,7 +16,7 @@ rect_free(mrb_state *mrb, void *ptr)
   }
 }
 
-const struct mrb_data_type mrb_oui_rect_type = { "UIrect", rect_free };
+MRB_OUI_EXTERN const struct mrb_data_type mrb_oui_rect_type = { "UIrect", rect_free };
 
 mrb_value
 mrb_oui_rect_value(mrb_state *mrb, UIrect rect)
@@ -56,7 +57,7 @@ base_DEF_ATTR_SET_i(rect_set_y, &mrb_oui_rect_type, UIrect, y);
 base_DEF_ATTR_SET_i(rect_set_w, &mrb_oui_rect_type, UIrect, w);
 base_DEF_ATTR_SET_i(rect_set_h, &mrb_oui_rect_type, UIrect, h);
 
-void
+MRB_OUI_EXTERN void
 mrb_oui_rect_init(mrb_state *mrb, struct RClass *mod)
 {
   rect_class = mrb_define_class_under(mrb, mod, "Rect", mrb->object_class);

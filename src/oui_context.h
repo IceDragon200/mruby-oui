@@ -4,8 +4,9 @@
 #include <mruby.h>
 #include <mruby/class.h>
 #include <mruby/data.h>
+#include "mrb_oui_common.h"
 
-extern const struct mrb_data_type mrb_oui_context_type;
+MRB_OUI_EXTERN const struct mrb_data_type mrb_oui_context_type;
 void mrb_oui_context_init(mrb_state *mrb, struct RClass *mod);
 void mrb_oui_context_final(mrb_state *mrb, struct RClass *mod);
 

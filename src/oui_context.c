@@ -183,7 +183,7 @@ d_DEF_FUNC_N1_i(UIcontext*, get_context, context_recover_item, uiRecoverItem, "i
 d_DEF_FUNC_N2(UIcontext*, get_context, context_remap_item, uiRemapItem, "ii", mrb_int, mrb_int);
 d_DEF_FUNC_N0_i(UIcontext*, get_context, context_get_last_item_count, uiGetLastItemCount);
 
-void
+MRB_OUI_EXTERN void
 mrb_oui_context_init(mrb_state *mrb, struct RClass *mod)
 {
   context_class = mrb_define_class_under(mrb, mod, "Context", mrb->object_class);
@@ -252,7 +252,7 @@ mrb_oui_context_init(mrb_state *mrb, struct RClass *mod)
   mrb_define_method(mrb, context_class, "get_last_item_count",    context_get_last_item_count,    MRB_ARGS_NONE());
 }
 
-void
+MRB_OUI_EXTERN void
 mrb_oui_context_final(mrb_state *mrb, struct RClass *mod)
 {
   //
